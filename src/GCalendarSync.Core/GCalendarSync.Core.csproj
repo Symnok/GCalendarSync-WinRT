@@ -1,0 +1,104 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--
+    The sync engine: vCard handling, the CardDAV client, the HTTP/TLS layer over the native
+    OpenSSL component, the phone contact-store bridge and the local sync state.
+
+    A plain class library rather than a WinRT component, so nothing here has to satisfy WinRT
+    metadata rules. Both heads - the app and the background task - reference it, which is what
+    keeps there being exactly one copy of the sync logic. (The W10M version it is ported from has
+    two, and they have already drifted.)
+  -->
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{A74F9006-6DE1-4061-9A72-BBB5F60CB7C9}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>GCalendarSync.Core</RootNamespace>
+    <AssemblyName>GCalendarSync.Core</AssemblyName>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <TargetPlatformIdentifier>WindowsPhoneApp</TargetPlatformIdentifier>
+    <TargetPlatformVersion>8.1</TargetPlatformVersion>
+    <MinimumVisualStudioVersion>12.0</MinimumVisualStudioVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{76F1466A-8B6D-4E39-A767-685A06062A39};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_PHONE_APP</DefineConstants>
+    <NoWarn>;2008</NoWarn>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE;NETFX_CORE;WINDOWS_PHONE_APP</DefineConstants>
+    <NoWarn>;2008</NoWarn>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+
+  <!-- The native TLS component's metadata is identical across architectures, so whichever one was
+       built last will do. build.bat builds it before anything managed.
+
+       Two paths because a v120 C++ project puts Win32 output straight in <Configuration>\ while
+       every other architecture gets <Platform>\<Configuration>\. -->
+  <PropertyGroup>
+    <TlsDir>$(MSBuildProjectDirectory)\..\GCalendarSync.Tls</TlsDir>
+    <TlsWinmdArm>$(TlsDir)\ARM\$(Configuration)\GCalendarSync.Tls\GCalendarSync.Tls.winmd</TlsWinmdArm>
+    <TlsWinmdX86>$(TlsDir)\$(Configuration)\GCalendarSync.Tls\GCalendarSync.Tls.winmd</TlsWinmdX86>
+    <TlsWinmd Condition="Exists('$(TlsWinmdArm)')">$(TlsWinmdArm)</TlsWinmd>
+    <TlsWinmd Condition="'$(TlsWinmd)'=='' and Exists('$(TlsWinmdX86)')">$(TlsWinmdX86)</TlsWinmd>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Compile-only: metadata for GCalendarSync.Tls.TlsClient. Not packaged (Private=false) -
+         the app's own ProjectReference to the vcxproj is what puts the winmd, the OpenSSL DLLs and
+         the VCLibs dependency into the package, and this library runs inside that package. No
+         <Implementation> metadata either, or RAR reads the native DLL as managed (MSB3246) and
+         drops the reference. -->
+    <Reference Include="GCalendarSync.Tls">
+      <HintPath>$(TlsWinmd)</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- XDocument, for the DAV multistatus replies. Part of the WindowsPhoneApp 8.1 profile but
+         not referenced by default. -->
+    <Reference Include="System.Xml.Linq" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Models\VEvent.cs" />
+    <Compile Include="Net\TlsHttpHandler.cs" />
+    <Compile Include="Net\TlsHttpPlumbing.cs" />
+    <Compile Include="Net\TrustBundle.cs" />
+    <Compile Include="Services\AppointmentMapping.cs" />
+    <Compile Include="Services\CalDavClient.cs" />
+    <Compile Include="Services\CalendarKinds.cs" />
+    <Compile Include="Services\ICalParser.cs" />
+    <Compile Include="Services\ICalText.cs" />
+    <Compile Include="Services\PhoneCalendars.cs" />
+    <Compile Include="Storage\AppSettings.cs" />
+    <Compile Include="Storage\CredentialStore.cs" />
+    <Compile Include="Storage\CredentialsFile.cs" />
+    <Compile Include="Storage\CredentialsFileReader.cs" />
+    <Compile Include="Storage\LocalFiles.cs" />
+    <Compile Include="Storage\SyncState.cs" />
+    <Compile Include="Sync\BackgroundSync.cs" />
+    <Compile Include="Sync\SyncEngine.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
+
+  <!-- After the imports so it wins: this AnyCPU (MSIL) library references the ARM/x86 native TLS
+       winmd for METADATA ONLY, so the implementation-architecture check (MSB3271, MSIL against ARM)
+       is a false positive. An AppContainer project otherwise forces it to an error. -->
+  <PropertyGroup>
+    <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+  </PropertyGroup>
+</Project>

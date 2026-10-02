@@ -1,0 +1,16 @@
+# Sample account file for GCalendarSync.
+#
+# Copy this to the phone as  Documents\caldav.cfg  - the app reads it on startup,
+# with no tapping at all. "load credentials from file" re-reads it, and falls back
+# to a file picker if it is not there.
+#
+# Two lines are all that is read. The separator may be ':' or '=', spacing and
+# key case do not matter, and '#' or ';' starts a comment.
+#
+# The password is a Google App Password, 16 characters, from
+# https://myaccount.google.com/apppasswords - NOT the account's own password.
+# Google shows it as four groups of four; copying it with the spaces in is fine,
+# they are stripped.
+
+login: someone@gmail.com
+password: abcdefghijklmnop

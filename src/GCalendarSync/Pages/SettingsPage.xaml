@@ -1,0 +1,131 @@
+<Page
+    x:Class="GCalendarSync.Pages.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <ScrollViewer>
+        <StackPanel Margin="19,12,19,24">
+
+            <TextBlock Text="settings" Margin="0,8,0,8"
+                       Style="{ThemeResource HeaderTextBlockStyle}" />
+
+            <!-- AUTOMATIC DOWNLOAD -->
+            <TextBlock Text="sync from Google" Margin="0,12,0,0"
+                       Style="{ThemeResource SubheaderTextBlockStyle}" />
+
+            <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="download automatically" FontSize="18"
+                           TextWrapping="Wrap" VerticalAlignment="Center" />
+                <ToggleSwitch Grid.Column="1" x:Name="AutoSyncSwitch" MinWidth="0"
+                              Toggled="OnAutoSyncToggled" />
+            </Grid>
+
+            <TextBlock Text="check every" FontSize="18" Margin="0,12,0,4" />
+            <ComboBox x:Name="IntervalBox" Width="240" HorizontalAlignment="Left"
+                      SelectionChanged="OnIntervalChanged">
+                <ComboBoxItem Content="15 minutes" Tag="15" />
+                <ComboBoxItem Content="30 minutes" Tag="30" />
+                <ComboBoxItem Content="1 hour" Tag="60" />
+                <ComboBoxItem Content="2 hours" Tag="120" />
+                <ComboBoxItem Content="4 hours" Tag="240" />
+                <ComboBoxItem Content="8 hours" Tag="480" />
+            </ComboBox>
+
+            <TextBlock Text="Windows Phone will not run a background task more often than every 15 minutes, and schedules it within another 15 of the interval elapsing - so this is a floor, not a promise. It also only runs while the phone allows background apps and has a connection."
+                       TextWrapping="Wrap" FontSize="13" Opacity="0.6" Margin="0,8,0,0" />
+
+            <!-- WHICH CALENDARS -->
+            <TextBlock Text="calendars to sync" Margin="0,24,0,0"
+                       Style="{ThemeResource SubheaderTextBlockStyle}" />
+
+            <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="personal calendar" FontSize="18"
+                           TextWrapping="Wrap" VerticalAlignment="Center" />
+                <ToggleSwitch Grid.Column="1" x:Name="PersonalSwitch" MinWidth="0"
+                              Toggled="OnCalendarToggled" />
+            </Grid>
+
+            <Grid Margin="0,4,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="birthday calendar" FontSize="18"
+                           TextWrapping="Wrap" VerticalAlignment="Center" />
+                <ToggleSwitch Grid.Column="1" x:Name="BirthdaysSwitch" MinWidth="0"
+                              Toggled="OnCalendarToggled" />
+            </Grid>
+            <TextBlock Text="Google builds this one from your contacts' birthday fields rather than from a calendar you keep. Off means it is never opened. Note that Google does not currently publish it over CalDAV at all, so switching it on may find nothing."
+                       TextWrapping="Wrap" FontSize="13" Opacity="0.6" Margin="0,2,0,0" />
+
+            <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="holidays" FontSize="18"
+                           TextWrapping="Wrap" VerticalAlignment="Center" />
+                <ToggleSwitch Grid.Column="1" x:Name="HolidaysSwitch" MinWidth="0"
+                              Toggled="OnCalendarToggled" />
+            </Grid>
+
+            <Grid Margin="0,4,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="other calendars" FontSize="18"
+                           TextWrapping="Wrap" VerticalAlignment="Center" />
+                <ToggleSwitch Grid.Column="1" x:Name="OtherSwitch" MinWidth="0"
+                              Toggled="OnCalendarToggled" />
+            </Grid>
+            <TextBlock Text="Holidays and Other each cover every calendar of that kind, however many the account has. Turning one off removes those events from the phone on the next sync - it does not merely stop refreshing them."
+                       TextWrapping="Wrap" FontSize="13" Opacity="0.6" Margin="0,2,0,0" />
+
+            <!-- WINDOW -->
+            <TextBlock Text="how much to keep" Margin="0,24,0,0"
+                       Style="{ThemeResource SubheaderTextBlockStyle}" />
+            <TextBlock Text="months either side of today" FontSize="18" Margin="0,8,0,4" />
+            <ComboBox x:Name="WindowBox" Width="240" HorizontalAlignment="Left"
+                      SelectionChanged="OnWindowChanged">
+                <ComboBoxItem Content="1 month" Tag="1" />
+                <ComboBoxItem Content="3 months" Tag="3" />
+                <ComboBoxItem Content="6 months" Tag="6" />
+                <ComboBoxItem Content="12 months" Tag="12" />
+            </ComboBox>
+            <TextBlock Text="A calendar holds years; a phone wants the part around today. The window is whole months, so it does not shift from one run to the next."
+                       TextWrapping="Wrap" FontSize="13" Opacity="0.6" Margin="0,8,0,0" />
+
+            <!-- STATE -->
+            <TextBlock Text="sync state" Margin="0,24,0,0"
+                       Style="{ThemeResource SubheaderTextBlockStyle}" />
+            <TextBlock x:Name="StateText" FontSize="14" Opacity="0.7"
+                       TextWrapping="Wrap" Margin="0,8,0,0" />
+
+            <Button x:Name="ResetButton" Content="forget sync state"
+                    HorizontalAlignment="Stretch" Margin="0,12,0,0"
+                    Click="OnResetClick" />
+            <TextBlock Text="Makes the next sync a full one. Events already on the phone are kept until that sync replaces them, and the account stays signed in."
+                       TextWrapping="Wrap" FontSize="13" Opacity="0.6" Margin="0,4,0,0" />
+
+            <!-- ABOUT -->
+            <TextBlock Text="about" Margin="0,24,0,0"
+                       Style="{ThemeResource SubheaderTextBlockStyle}" />
+            <TextBlock x:Name="AboutText" FontSize="14" Opacity="0.7"
+                       TextWrapping="Wrap" Margin="0,8,0,0" />
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

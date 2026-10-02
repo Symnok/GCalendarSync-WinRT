@@ -1,0 +1,75 @@
+# --- managed build output --------------------------------------------------
+[Bb]in/
+[Oo]bj/
+AppPackages/
+BundleArtifacts/
+*.appxupload
+*.appxsym
+
+# AppPackages is build output: every build writes a new .appx, its signing .cer and a copy of the
+# VCLibs dependency, so tracking it would add megabytes of binaries per version. It is ignored, not
+# deleted - build.bat clean leaves it alone, so previous builds stay on disk to sideload from.
+#
+# It does mean a fresh clone has no signing certificate. That is by design: the .pfx is a private key
+# and is never committed, so a clone generates its own with make-cert.ps1 and installs that .cer on
+# the phone once. Keep a backup of the .pfx somewhere outside the repo - it is the only thing that
+# can sign an upgrade for an already-installed copy of this app.
+
+# The vendored OpenSSL DLLs live in a folder called "bin", which [Bb]in/ above would swallow - a
+# clone would then have the import libraries but no DLLs and could not package. Git cannot
+# re-include a file whose parent directory is excluded, so the directories themselves must be
+# un-ignored here.
+!/lib/openssl/wp81-arm-v120/bin/
+!/lib/openssl/wp81-x86-v120/bin/
+
+# --- native component output ------------------------------------------------
+# A C++ project writes to <Platform>\<Configuration>\ (and, for Win32, straight to
+# <Configuration>\), NOT to bin\ or obj\, so the rules above miss it entirely - this is ~100 MB.
+# Paths are anchored to the Tls project so they cannot swallow lib\openssl\, which is vendored and
+# IS tracked.
+/src/GCalendarSync.Tls/ARM/
+/src/GCalendarSync.Tls/Win32/
+/src/GCalendarSync.Tls/x86/
+/src/GCalendarSync.Tls/Debug/
+/src/GCalendarSync.Tls/Release/
+/src/GCalendarSync.Tls/Generated Files/
+
+# --- linker / compiler artefacts, wherever they land -------------------------
+# Belt and braces: the anchored rules above cover today's output paths, but a new configuration or
+# platform would write somewhere they do not match. These extensions are never source.
+#
+# *.lib is DELIBERATELY ABSENT - lib\openssl\**\*.lib are the vendored OpenSSL import libraries
+# and MUST stay tracked. Do not add it.
+*.exp
+*.ilk
+*.obj
+*.pdb
+*.idb
+*.iobj
+*.ipdb
+*.tlog
+*.pch
+*.res
+*.winmd
+*.lastbuildstate
+*.recipe
+*.metagen
+
+# --- Visual Studio noise ----------------------------------------------------
+.vs/
+*.user
+*.suo
+*.opendb
+*.VC.db
+*.aps
+ipch/
+
+# --- secrets ----------------------------------------------------------------
+# A real account file, if one is left in the repo while testing. The .sample in docs\ is the
+# template and IS tracked. This is the only thing here worth keeping out.
+gcalendarsync.cfg
+
+# The package signing key is deliberately NOT ignored - see the note in README.md. It is a
+# self-signed sideloading certificate for a test app that will never reach the Store, and tracking it
+# is what lets any clone build a package the phone accepts as an upgrade of the installed app instead
+# of a different one. Same arrangement as the Windows 10 Mobile version this was ported from.

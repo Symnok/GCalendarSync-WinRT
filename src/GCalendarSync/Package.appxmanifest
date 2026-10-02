@@ -1,0 +1,85 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/2010/manifest"
+         xmlns:m2="http://schemas.microsoft.com/appx/2013/manifest"
+         xmlns:m3="http://schemas.microsoft.com/appx/2014/manifest"
+         xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest">
+  <!-- A NEW app, so a new identity: nothing here is shared with GContactsSync. Installing this
+       beside it is the intent - they sync different things into different places. Change any of
+       these three later and the phone treats the result as yet another app, installing it
+       alongside and orphaning the calendar, the saved account and the sync state this one owns.
+       The visible name is DisplayName below. -->
+  <Identity Name="GCalendarSync" Publisher="CN=GCalendarSync" Version="1.0.8.0" />
+  <mp:PhoneIdentity PhoneProductId="4010a864-d416-47a8-8baf-652901d46a7d" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
+  <Properties>
+    <!-- What the app list and the tile show. Everything else was renamed to match - namespaces,
+         assemblies, projects, the package file - but Identity and Publisher below are deliberately
+         left as they were. -->
+    <DisplayName>GCalendarSync</DisplayName>
+    <PublisherDisplayName>GCalendarSync</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+  <Prerequisites>
+    <OSMinVersion>6.3.1</OSMinVersion>
+    <OSMaxVersionTested>6.3.1</OSMaxVersionTested>
+  </Prerequisites>
+  <Resources>
+    <Resource Language="en-US" />
+  </Resources>
+  <Applications>
+    <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="GCalendarSync.App">
+      <m3:VisualElements DisplayName="GCalendarSync" ForegroundText="light"
+                         Square150x150Logo="Assets\Logo.png"
+                         Square44x44Logo="Assets\SmallLogo.png"
+                         Description="Sync Google Contacts over CardDAV"
+                         BackgroundColor="#1A73E8">
+        <m3:DefaultTile Square71x71Logo="Assets\Square71x71Logo.png">
+          <!-- Without this the tile is artwork only - WP8.1 does not draw the name on a tile unless
+               the app asks for it, which is why the tile had no label. Only the medium tile is
+               listed: the small one cannot show a name, and no wide logo is shipped. -->
+          <m3:ShowNameOnTiles>
+            <m3:ShowOn Tile="square150x150Logo" />
+          </m3:ShowNameOnTiles>
+        </m3:DefaultTile>
+        <m3:SplashScreen Image="Assets\SplashScreen.png" />
+      </m3:VisualElements>
+      <Extensions>
+        <!-- documentsLibrary access is only granted for file types the app associates itself
+             with - the manifest is rejected (APPX1627) without at least one. The account file is
+             Documents\caldav.cfg, so .cfg is the association.
+
+             .cfg rather than .txt on purpose: an association claims the extension across the whole
+             phone, and claiming .txt would put GCalendarSync in the "open with" list for every
+             text file on it. .cfg is narrow enough that nothing else is affected. -->
+        <Extension Category="windows.fileTypeAssociation">
+          <FileTypeAssociation Name="gcalendarsyncaccount">
+            <SupportedFileTypes>
+              <FileType>.cfg</FileType>
+            </SupportedFileTypes>
+          </FileTypeAssociation>
+        </Extension>
+        <!-- The periodic Google-to-phone download. EntryPoint is the runtime class in the
+             GCalendarSync.BackgroundTasks winmd component; the app registers it at runtime
+             with a TimeTrigger, whose interval Windows Phone floors at 15 minutes. Type "timer"
+             is what a time trigger needs. -->
+        <Extension Category="windows.backgroundTasks" EntryPoint="GCalendarSync.BackgroundTasks.PeriodicSyncTask">
+          <BackgroundTasks>
+            <Task Type="timer" />
+          </BackgroundTasks>
+        </Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+  <Capabilities>
+    <!-- internetClient covers the raw sockets the OpenSSL transport opens.
+
+         contacts is what lets the app keep its own contact store, which the People hub then shows
+         alongside every other account. It has to come from the 2014 namespace: the base 2010
+         schema's capability list has no "appointments" in it, and a plain <Capability> is rejected
+         with APPX3024. -->
+    <Capability Name="internetClient" />
+    <m3:Capability Name="appointments" />
+    <!-- documentsLibrary: read Documents\caldav.cfg, so an App Password does not have to
+         be typed on a phone keyboard for every test. Read only, and only that one file. -->
+    <Capability Name="documentsLibrary" />
+  </Capabilities>
+</Package>
